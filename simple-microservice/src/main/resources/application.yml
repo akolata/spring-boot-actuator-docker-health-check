@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: simple-microservice
+  config:
+    import: "optional:configserver:"
+  cloud:
+    config:
+      fail-fast: true

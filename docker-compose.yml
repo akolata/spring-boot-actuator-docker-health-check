@@ -1,0 +1,44 @@
+version: '3.9'
+
+services:
+  config-service:
+    container_name: spring-boot-healthcheck-demo-config-service
+    pull_policy: always
+    image: spring-boot-healthcheck-demo/config-service:latest
+    ports:
+      - "8888:8888"
+    healthcheck:
+      test: "curl --fail --silent localhost:8888/actuator/health/readiness | grep UP || exit 1"
+      interval: 2s
+      timeout: 3s
+      retries: 5
+      start_period: 2s
+    networks:
+      backend:
+        aliases:
+          - "config-server"
+
+  simple-microservice:
+    container_name: spring-boot-healthcheck-demo-simple-microservice
+    image: spring-boot-healthcheck-demo/simple-microservice:latest
+    pull_policy: always
+    healthcheck:
+      test: "curl --fail --silent localhost:8080/actuator/health/readiness | grep UP || exit 1"
+      interval: 2s
+      timeout: 3s
+      retries: 5
+      start_period: 2s
+    environment:
+      SERVER_PORT: 8080
+      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-service:8888"
+    depends_on:
+      config-service:
+        condition: service_healthy
+    networks:
+      backend:
+        aliases:
+          - "simple-microservice"
+
+networks:
+  backend:
+    driver: bridge
